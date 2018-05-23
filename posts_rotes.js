@@ -1,6 +1,7 @@
 const express = require('express');
 const indicative = require('indicative');
 const router = express.Router();
+const error = require('./helpers').errorResonse;
 
 router.get('/', (req, res) => {
     const db = req.app.locals.db;
@@ -25,10 +26,10 @@ router.get('/:postId', (req, res) => {
                 if (err) throw err;
                 if (typeof result !== 'undefined') {
                     res.json(result);
-                  }
-                  else {
+                }
+                else {
                     error(req, res, 404, `Post with Id=${params.postId} not found.`);
-                  }
+                }
             });
         });
 });
@@ -46,8 +47,8 @@ router.post('/', (req, res) => {
         const uri = req.baseUrl + '/' + post.Id;
 
         res.location(uri)
-           .status(201)
-           .json(post);
+            .status(201)
+            .json(post);
     });
 });
 
@@ -62,19 +63,19 @@ router.put('/:postId', (req, res) => {
         Text: 'required|string',
         Status: 'required|string'
     })
-    .then(() => {
-        const updateQuery = 'UPDATE posts SET Title = ?, Autor = ?, Text = ?, Tags = ?, URL = ?, Status = ? WHERE id = ?';
+        .then(() => {
+            const updateQuery = 'UPDATE posts SET Title = ?, Autor = ?, Text = ?, Tags = ?, URL = ?, Status = ? WHERE id = ?';
 
-        db.run(updateQuery, [post.Title, post.Autor, post.Text, post.Tags, post.URL, post.Status, params.postId], function (err) {
-            if (err) throw err;
-            if (this.changes > 0) {
-                res.json({ message: 'Post updated successfully' });
-              }
-              else {
-                error(req, res, 404, `Post with Id=${params.postId} not found.`);
-              }
+            db.run(updateQuery, [post.Title, post.Autor, post.Text, post.Tags, post.URL, post.Status, params.postId], function (err) {
+                if (err) throw err;
+                if (this.changes > 0) {
+                    res.json({ message: 'Post updated successfully' });
+                }
+                else {
+                    error(req, res, 404, `Post with Id=${params.postId} not found.`);
+                }
+            });
         });
-    });
 });
 
 router.delete('/:postId', (req, res) => {
@@ -85,34 +86,14 @@ router.delete('/:postId', (req, res) => {
         .then(() => {
             db.run('DELETE FROM posts WHERE id = ?', [params.postId], function (err) {
                 if (err) throw err;
-                if (this.changes > 0){
+                if (this.changes > 0) {
                     res.json({ message: 'Post deleted successfully' });
                 }
-                else{
+                else {
                     error(req, res, 404, `Post with Id=${params.postId} not found.`);
                 }
             });
         });
 });
-
-function error (req, res, statusCode, message, error) {
-    if (req.get('env') === 'development') {
-      res.status(statusCode || 500);
-      res.json({
-        'errors': [{
-          message,
-          error: error || {}
-        }]
-      });
-    } else {
-      res.status(statusCode || 500);
-      res.json({
-        'errors': [{
-          message,
-          error: {}
-        }]
-      });
-    }
-  }
 
 module.exports = router;
