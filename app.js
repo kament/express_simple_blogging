@@ -2,12 +2,17 @@ var sqlite3 = require('sqlite3').verbose();
 const express = require('express');
 const postsRoutes = require('./posts_rotes');
 const bodyParser = require('body-parser');
+const errorMiddlewares = require('./error_middlewares');
 
 const app = express();
 
 app.use(bodyParser.json());
 
 app.use('/api/posts', postsRoutes);
+
+app.use(errorMiddlewares.logErrors)
+app.use(errorMiddlewares.clientErrorHandler)
+app.use(errorMiddlewares.errorHandler)
 
 // Initialize DB
 const DB_FILE = './simple_blog.sqlite';

@@ -40,15 +40,24 @@ router.post('/', (req, res) => {
 
     const createQuery = 'INSERT INTO posts (Title, Autor, Text, Tags, URL, Status) VALUES(?, ?, ?, ?, ?, ?)';
 
-    db.run(createQuery, [post.Title, post.Autor, post.Text, post.Tags, post.URL, post.Status], function (err, result) {
-        if (err) throw err;
+    indicative.validate(post, {
+        Title: 'required|string',
+        Autor: 'required|string',
+        Text: 'required|string',
+        Status: 'required|string'
+    }).then(() => {
+        db.run(createQuery, [post.Title, post.Autor, post.Text, post.Tags, post.URL, post.Status], function (err, result) {
+            if (err) throw err;
 
-        post.Id = this.lastID;
-        const uri = req.baseUrl + '/' + post.Id;
+            post.Id = this.lastID;
+            const uri = req.baseUrl + '/' + post.Id;
 
-        res.location(uri)
-            .status(201)
-            .json(post);
+            res.location(uri)
+                .status(201)
+                .json(post);
+        });
+    }).catch(errors => {
+        error(req, res, 400, `Invalid post data: ${errors}`);
     });
 });
 
@@ -62,20 +71,21 @@ router.put('/:postId', (req, res) => {
         Autor: 'required|string',
         Text: 'required|string',
         Status: 'required|string'
-    })
-        .then(() => {
-            const updateQuery = 'UPDATE posts SET Title = ?, Autor = ?, Text = ?, Tags = ?, URL = ?, Status = ? WHERE id = ?';
+    }).then(() => {
+        const updateQuery = 'UPDATE posts SET Title = ?, Autor = ?, Text = ?, Tags = ?, URL = ?, Status = ? WHERE id = ?';
 
-            db.run(updateQuery, [post.Title, post.Autor, post.Text, post.Tags, post.URL, post.Status, params.postId], function (err) {
-                if (err) throw err;
-                if (this.changes > 0) {
-                    res.json({ message: 'Post updated successfully' });
-                }
-                else {
-                    error(req, res, 404, `Post with Id=${params.postId} not found.`);
-                }
-            });
+        db.run(updateQuery, [post.Title, post.Autor, post.Text, post.Tags, post.URL, post.Status, params.postId], function (err) {
+            if (err) throw err;
+            if (this.changes > 0) {
+                res.json({ message: 'Post updated successfully' });
+            }
+            else {
+                error(req, res, 404, `Post with Id=${params.postId} not found.`);
+            }
+        }).catch(errors => {
+            error(req, res, 400, `Invalid post data: ${errors}`);
         });
+    });
 });
 
 router.delete('/:postId', (req, res) => {
@@ -93,7 +103,9 @@ router.delete('/:postId', (req, res) => {
                     error(req, res, 404, `Post with Id=${params.postId} not found.`);
                 }
             });
-        });
+        }).catch(errors => {
+            error(req, res, 400, `Invalid post id: ${postId}`);
+        });;
 });
 
 module.exports = router;
