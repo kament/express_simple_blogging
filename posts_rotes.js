@@ -31,6 +31,8 @@ router.get('/:postId', (req, res) => {
                     error(req, res, 404, `Post with Id=${params.postId} not found.`);
                 }
             });
+        }).catch(errors => {
+            error(req, res, 400, `Invalid post id: ${postId}`);
         });
 });
 
@@ -105,7 +107,7 @@ router.delete('/:postId', (req, res) => {
             });
         }).catch(errors => {
             error(req, res, 400, `Invalid post id: ${postId}`);
-        });;
+        });
 });
 
 module.exports = router;
